@@ -49,6 +49,18 @@ static int parse_true(Context* c, ElemValue* v) {
     return PARSE_OK;
 }
 
+// 解析理想的上下文数字，并且返回结果
+static int parse_number(Context* c, ElemValue* v) {
+    char* p;
+    v->n = strtod(c->json, &p);
+    if (c->json == p) {
+        return PARSE_INVALID_VALUE;
+    }
+    c->json = p;
+    v->type = VALUE_NUMBER;
+    return PARSE_OK;
+}
+
 // 解析理想的上下文，并且返回结果
 static int parse_value(Context* c, ElemValue* v) {
     switch (*c->json) {
@@ -56,7 +68,7 @@ static int parse_value(Context* c, ElemValue* v) {
         case 'f':  return parse_false(c, v);
         case 't':  return parse_true(c, v);
         case '\0': return PARSE_EXPECT_VALUE;
-        default:   return PARSE_INVALID_VALUE;
+        default:   return parse_number(c, v);
     }
 }
 
@@ -73,6 +85,7 @@ int parse(ElemValue* v, const char* json) {
     int res =  parse_value(&c, v);
     parse_whitespace(&c);
     if (res == PARSE_OK && *c.json != '\0') {
+        v->type = VALUE_NULL;
         return PARSE_ROOT_NOT_SINGULAR;
     }
     return res;
@@ -81,4 +94,9 @@ int parse(ElemValue* v, const char* json) {
 ValueType get_type(const ElemValue* v) {
     assert(v != NULL);
     return v->type;
+}
+
+double get_number(const ElemValue* v) {
+    assert(v != NULL && v->type == VALUE_NUMBER);
+    return v->n;
 }

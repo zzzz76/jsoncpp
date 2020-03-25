@@ -4,6 +4,7 @@
 typedef enum { VALUE_NULL, VALUE_FALSE, VALUE_TRUE, VALUE_NUMBER, VALUE_STRING, VALUE_ARRAY, VALUE_OBJECT } ValueType;
 
 typedef struct {
+    double n;
     ValueType type;
 }ElemValue;
 
@@ -17,5 +18,7 @@ enum {
 int parse(ElemValue* v, const char* json);
 
 ValueType get_type(const ElemValue* v);
+
+double get_number(const ElemValue* v);
 
 #endif //JSONCPP_JSONC_H
