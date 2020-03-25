@@ -27,9 +27,23 @@ static void test_parse_null() {
     EXPECT_EQ_INT(VALUE_NULL, get_type(&v));
 }
 
+static void test_parse_false() {
+    ElemValue v;
+    v.type = VALUE_FALSE;
+    EXPECT_EQ_INT(PARSE_OK, parse(&v, "false"));
+    EXPECT_EQ_INT(VALUE_FALSE, get_type(&v));
+}
+
+static void test_parse_true() {
+    ElemValue v;
+    v.type = VALUE_FALSE;
+    EXPECT_EQ_INT(PARSE_OK, parse(&v, "true"));
+    EXPECT_EQ_INT(VALUE_TRUE, get_type(&v));
+}
+
+
 static void test_parse_expect_value() {
     ElemValue v;
-
     v.type = VALUE_FALSE;
     EXPECT_EQ_INT(PARSE_EXPECT_VALUE, parse(&v, ""));
     EXPECT_EQ_INT(VALUE_NULL, get_type(&v));
@@ -59,6 +73,8 @@ static void test_parse_root_not_singular() {
 
 static void test_parse() {
     test_parse_null();
+    test_parse_false();
+    test_parse_true();
     test_parse_expect_value();
     test_parse_invalid_value();
     test_parse_root_not_singular();
