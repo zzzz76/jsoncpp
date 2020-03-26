@@ -1,8 +1,13 @@
 #include "jsonc.h"
 #include <assert.h>  /* assert() */
 #include <stdlib.h>  /* NULL */
+#include <errno.h>  /* errno, ERANGE */
+#include <math.h>   /* HUGE_VAL */
 
 #define EXPECT(c, ch)       do { assert(*c->json == (ch)); c->json++; } while(0)
+#define ISDIGIT(ch)         ((ch) >= '0' && (ch) <= '9')
+#define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
+
 
 typedef struct {
     const char* json;
@@ -16,46 +21,60 @@ static void parse_whitespace(Context* c) {
     c->json = p;
 }
 
-// 解析理想的上下文null，并且返回结果
-static int parse_null(Context* c, ElemValue* v) {
-    EXPECT(c, 'n');
-    if (c->json[0] != 'u' || c->json[1] != 'l' || c->json[2] != 'l')
-        return PARSE_INVALID_VALUE;
-    c->json += 3;
-    v->type = VALUE_NULL;
-    return PARSE_OK;
-}
-
-// 解析理想的上下文false，并且返回结果
-static int parse_false(Context* c, ElemValue* v) {
-    EXPECT(c, 'f');
-    if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's' || c->json[3] != 'e') {
-        return PARSE_INVALID_VALUE;
+// 解析理想的上下文字段，并且返回结果
+static int parse_literal(Context* c, ElemValue* v, const char* literal, ValueType type) {
+    size_t i;
+    EXPECT(c, literal[0]);
+    for (i = 0; literal[i + 1] != '\0'; i++ ) {
+        if (c->json[i] != literal[i + 1]) {
+            return PARSE_INVALID_VALUE;
+        }
     }
-    c->json += 4;
-    v->type = VALUE_FALSE;
-    return PARSE_OK;
-}
-
-// 解析理想的上下文true，并且返回结果
-static int parse_true(Context* c, ElemValue* v) {
-    // 解析v 并返回解析结果
-    EXPECT(c, 't');
-    if (c->json[0] != 'r' || c->json[1] != 'u' || c->json[2] != 'e') {
-        return PARSE_INVALID_VALUE;
-    }
-    c->json += 3;
-    v->type = VALUE_TRUE;
+    c->json += i;
+    v->type = type;
     return PARSE_OK;
 }
 
 // 解析理想的上下文数字，并且返回结果
 static int parse_number(Context* c, ElemValue* v) {
-    char* p;
-    v->n = strtod(c->json, &p);
-    if (c->json == p) {
+    const char* p = c->json;
+    //负号
+    if (*p == '-') p++;
+    //整数
+    if (*p == '0') {
+        p++;
+    } else if (ISDIGIT1TO9(*p)){
+        p++;
+        for (p; ISDIGIT(*p); ++p);
+    } else {
         return PARSE_INVALID_VALUE;
     }
+    //小数
+    if (*p == '.') {
+        p++;
+        if (ISDIGIT(*p)) {
+            p++;
+            for (p; ISDIGIT(*p); ++p);
+        } else {
+            return PARSE_INVALID_VALUE;
+        }
+    }
+    //指数
+    if (*p == 'e' || *p == 'E') {
+        p++;
+        if (*p == '+' || *p == '-') p++;
+        if (ISDIGIT(*p)) {
+            p++;
+            for (p; ISDIGIT(*p); p++);
+        } else {
+            return PARSE_INVALID_VALUE;
+        }
+    }
+
+    errno = 0;
+    v->n = strtod(c->json, NULL);
+    if (errno == ERANGE && (v->n == HUGE_VAL || v->n == -HUGE_VAL))
+        return PARSE_NUMBER_TOO_BIG;
     c->json = p;
     v->type = VALUE_NUMBER;
     return PARSE_OK;
@@ -64,9 +83,9 @@ static int parse_number(Context* c, ElemValue* v) {
 // 解析理想的上下文，并且返回结果
 static int parse_value(Context* c, ElemValue* v) {
     switch (*c->json) {
-        case 'n':  return parse_null(c, v);
-        case 'f':  return parse_false(c, v);
-        case 't':  return parse_true(c, v);
+        case 'n':  return parse_literal(c, v, "null", VALUE_NULL);
+        case 'f':  return parse_literal(c, v, "false", VALUE_FALSE);
+        case 't':  return parse_literal(c, v, "true", VALUE_TRUE);
         case '\0': return PARSE_EXPECT_VALUE;
         default:   return parse_number(c, v);
     }
