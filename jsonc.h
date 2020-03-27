@@ -8,18 +8,18 @@ typedef struct {
     ValueType type;
 }ElemValue;
 
-enum {
+typedef enum {
     PARSE_OK = 0,
     PARSE_EXPECT_VALUE,
     PARSE_INVALID_VALUE,
     PARSE_ROOT_NOT_SINGULAR,
     PARSE_NUMBER_TOO_BIG
-};
+} ExceptType;
 
-int parse(ElemValue* v, const char* json);
+ElemValue* parse(char* json);
 
-ValueType get_type(const ElemValue* v);
+ValueType get_type(ElemValue* v);
 
-double get_number(const ElemValue* v);
+double get_number(ElemValue* v);
 
 #endif //JSONCPP_JSONC_H

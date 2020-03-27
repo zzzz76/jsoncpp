@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jsonc.h"
+#include "leptTest.h"
 
 static int main_ret = 0;
 static int test_count = 0;
@@ -24,30 +25,30 @@ static int test_pass = 0;
 static void test_parse_null() {
     ElemValue v;
     v.type = VALUE_FALSE;
-    EXPECT_EQ_INT(PARSE_OK, parse(&v, "null"));
-    EXPECT_EQ_INT(VALUE_NULL, get_type(&v));
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, "null"));
+    EXPECT_EQ_INT(VALUE_NULL, lept_get_type(&v));
 }
 
 static void test_parse_true() {
     ElemValue v;
     v.type = VALUE_FALSE;
-    EXPECT_EQ_INT(PARSE_OK, parse(&v, "true"));
-    EXPECT_EQ_INT(VALUE_TRUE, get_type(&v));
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, "true"));
+    EXPECT_EQ_INT(VALUE_TRUE, lept_get_type(&v));
 }
 
 static void test_parse_false() {
     ElemValue v;
     v.type = VALUE_TRUE;
-    EXPECT_EQ_INT(PARSE_OK, parse(&v, "false"));
-    EXPECT_EQ_INT(VALUE_FALSE, get_type(&v));
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, "false"));
+    EXPECT_EQ_INT(VALUE_FALSE, lept_get_type(&v));
 }
 
 #define TEST_NUMBER(expect, json)\
     do {\
         ElemValue v;\
-        EXPECT_EQ_INT(PARSE_OK, parse(&v, json));\
-        EXPECT_EQ_INT(VALUE_NUMBER, get_type(&v));\
-        EXPECT_EQ_DOUBLE(expect, get_number(&v));\
+        EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, json));\
+        EXPECT_EQ_INT(VALUE_NUMBER, lept_get_type(&v));\
+        EXPECT_EQ_DOUBLE(expect, lept_get_number(&v));\
     } while(0)
 
 static void test_parse_number() {
@@ -86,8 +87,7 @@ static void test_parse_number() {
     do {\
         ElemValue v;\
         v.type = VALUE_FALSE;\
-        EXPECT_EQ_INT(error, parse(&v, json));\
-        EXPECT_EQ_INT(VALUE_NULL, get_type(&v));\
+        EXPECT_EQ_INT(error, lept_parse(&v, json));\
     } while(0)
 
 static void test_parse_expect_value() {
