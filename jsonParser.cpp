@@ -1,4 +1,4 @@
-#include "jsonc.h"
+#include "jsonParser.h"
 #include <assert.h>  /* assert() */
 #include <stdlib.h>  /* NULL */
 #include <errno.h>  /* errno, ERANGE */
@@ -15,6 +15,8 @@ typedef struct {
     char *json;
 } Context;
 
+static ElemValue* parse_value(Context *c);
+
 // 上下文过滤器：不理想 -> 理想
 static void parse_whitespace(Context *c) {
     char *p = c->json;
@@ -23,7 +25,7 @@ static void parse_whitespace(Context *c) {
     c->json = p;
 }
 
-// 将json转换为null对象，并更新上下文
+// 将上下文转换为null对象，并更新上下文
 static ElemValue* parse_null(Context *c) {
     if (c->json[0] != 'n' || c->json[1] != 'u' || c->json[2] != 'l' || c->json[3] != 'l') {
         throw PARSE_INVALID_VALUE;
@@ -34,7 +36,7 @@ static ElemValue* parse_null(Context *c) {
     return v;
 }
 
-// 将json转换为false对象，并更新上下文
+// 将上下文转换为false对象，并更新上下文
 static ElemValue* parse_false(Context *c) {
     if (c->json[0] != 'f' || c->json[1] != 'a' || c->json[2] != 'l' || c->json[3] != 's' || c->json[4] != 'e') {
         throw PARSE_INVALID_VALUE;
@@ -45,7 +47,7 @@ static ElemValue* parse_false(Context *c) {
     return v;
 }
 
-// 将json转换为true对象，并更新上下文
+// 将上下文转换为true对象，并更新上下文
 static ElemValue* parse_true(Context *c) {
     if (c->json[0] != 't' || c->json[1] != 'r' || c->json[2] != 'u' || c->json[3] != 'e') {
         throw PARSE_INVALID_VALUE;
@@ -57,7 +59,7 @@ static ElemValue* parse_true(Context *c) {
 }
 
 
-// 将json转换为number对象，并更新上下文
+// 将上下文转换为number对象，并更新上下文
 static ElemValue* parse_number(Context *c) {
     char *p = c->json;
     //负号
@@ -93,18 +95,60 @@ static ElemValue* parse_number(Context *c) {
         }
     }
 
-    errno = 0;
-    double temp = strtod(c->json, NULL);
-    if (errno == ERANGE && (temp == HUGE_VAL || temp == -HUGE_VAL))
-        throw PARSE_NUMBER_TOO_BIG;
     ElemValue* v = new ElemValue;
-    v->n = temp;
     v->type = VALUE_NUMBER;
+    errno = 0;
+    v->n = strtod(c->json, NULL);
+    if (errno == ERANGE && (v->n == HUGE_VAL || v->n == -HUGE_VAL)) {
+        throw PARSE_NUMBER_TOO_BIG;
+    }
     c->json = p;
     return v;
 }
 
-// 将json转换为value对象, 并更新上下文
+// 将上下文转换为value对象，并更新上下文
+static ElemValue* parse_string(Context *c) {
+    // 先为json预设value对象
+    ElemValue* v = new ElemValue;
+    v->type = VALUE_STRING;
+    v->str = new string;
+    // 游动指针
+    c->json++;
+    while (*c->json != '"') {
+        if (*c->json == '\0') {
+            throw PARSE_MISS_QUOTATION_MARK;
+        }
+        v->str->push_back(*c->json);
+        c->json++;
+    }
+    c->json++;
+    return v;
+}
+
+// 将上下文转换为value对象，并更新上下文
+static ElemValue* parse_array(Context *c) {
+    // 先为json预设value对象
+    ElemValue* v= new ElemValue;
+    v->type = VALUE_ARRAY;
+    // 游动指针
+    c->json++;
+    while (true) {
+        parse_whitespace(c);
+        v->array.push_back(parse_value(c));
+        parse_whitespace(c);
+        if (*c->json == ',') {
+            c->json++;
+        } else if (*c->json == ']') {
+            c->json++;
+            break;
+        } else {
+            throw PARSE_MISS_COMMA_OR_SQUARE_BRACKET;
+        }
+    }
+    return v;
+}
+
+// 将上下文转换为value对象, 并更新上下文
 static ElemValue* parse_value(Context *c) {
     switch (*c->json) {
         case 'n':
@@ -113,6 +157,10 @@ static ElemValue* parse_value(Context *c) {
             return parse_false(c);
         case 't':
             return parse_true(c);
+        case '"':
+            return parse_string(c);
+        case '[':
+            return parse_array(c);
         case '\0':
             throw PARSE_EXPECT_VALUE;
         default:
@@ -135,12 +183,18 @@ ElemValue* parse(char *json) {
     return v;
 }
 
-ValueType get_type(ElemValue *v) {
-    assert(v != NULL);
-    return v->type;
-}
+//ValueType get_type(ElemValue *v) {
+//    assert(v != NULL);
+//    return v->type;
+//}
+//
+//double get_number(ElemValue *v) {
+//    assert(v != NULL && v->type == VALUE_NUMBER);
+//    return v->n;
+//}
+//
+//string* get_string(ElemValue *v) {
+//    assert(v != NULL && v->type == VALUE_STRING);
+//    return v->str;
+//}
 
-double get_number(ElemValue *v) {
-    assert(v != NULL && v->type == VALUE_NUMBER);
-    return v->n;
-}

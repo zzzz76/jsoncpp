@@ -79,3 +79,15 @@ Node *node = new Node();
 对于第二种情况，需要立刻终止函数的执行
 比如：编译错误、程序中断(溢出、报错)
 
+## 基本介绍
+
+* test: 为测试启动器，里面的多个测试用例均来自lept_json
+* leptTest: 为解析库，负责提供测试需要的函数，并调用解析器进行解析
+* jsonc: 为解析器。
+
+依赖关系:
+
+test -> leptTest -> jsonc
+test -> leptTest.h / jsonc.h
+leptTest -> jsonc.h
+jsonc -> jsonc.h

@@ -3,4 +3,4 @@ project(jsoncpp)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(jsoncpp jsonc.cpp jsonc.h test.cpp leptTest.cpp leptTest.h)
+add_executable(jsoncpp jsonParser.cpp jsonParser.h test.cpp leptjson.cpp leptjson.h)
