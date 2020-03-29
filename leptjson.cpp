@@ -1,12 +1,12 @@
 #include <assert.h>
-#include "jsonParser.h"
+#include "src/jsonParser.h"
 #include "leptjson.h"
 
 int lept_parse(ElemValue *v, const char *json) {
     try {
+        lept_free(v);
         *v = *parse(const_cast<char *>(json));
     } catch (ExceptType e) {
-        lept_init(v);
         return e;
     }
     return PARSE_OK;
@@ -15,7 +15,7 @@ int lept_parse(ElemValue *v, const char *json) {
 void lept_free(ElemValue* v) {
     assert(v != NULL);
     if (v->type == VALUE_STRING)
-        free(v->str);
+        delete(v->str);
     v->type = VALUE_NULL;
 }
 
@@ -25,12 +25,13 @@ ValueType lept_get_type(const ElemValue* v) {
 }
 
 int lept_get_boolean(const ElemValue* v) {
-    /* \TODO */
-    return 0;
+    assert(v != NULL && (v->type == VALUE_TRUE || v->type == VALUE_FALSE));
+    return v->type == VALUE_TRUE;
 }
 
 void lept_set_boolean(ElemValue* v, int b) {
-    /* \TODO */
+    lept_free(v);
+    v->type = b ? VALUE_TRUE : VALUE_FALSE;
 }
 
 double lept_get_number(const ElemValue* v) {
@@ -39,7 +40,9 @@ double lept_get_number(const ElemValue* v) {
 }
 
 void lept_set_number(ElemValue* v, double n) {
-    /* \TODO */
+    lept_free(v);
+    v->n = n;
+    v->type = VALUE_NUMBER;
 }
 
 const char* lept_get_string(const ElemValue* v) {

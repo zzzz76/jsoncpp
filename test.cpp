@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "jsonParser.h"
+#include "src/jsonParser.h"
 #include "leptjson.h"
 
 static int main_ret = 0;
@@ -48,8 +48,7 @@ static void test_parse_false() {
     ElemValue v;
     lept_init(&v);
     lept_set_boolean(&v, 1);
-    /* "fas\"le" */
-    EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, "fasle"));
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, "false"));
     EXPECT_EQ_INT(VALUE_FALSE, lept_get_type(&v));
     lept_free(&v);
 }
@@ -209,12 +208,23 @@ static void test_access_null() {
 }
 
 static void test_access_boolean() {
-    /* \TODO */
-    /* Use EXPECT_TRUE() and EXPECT_FALSE() */
+    ElemValue v;
+    lept_init(&v);
+    lept_set_string(&v, "a", 1);
+    lept_set_boolean(&v, 1);
+    EXPECT_TRUE(lept_get_boolean(&v));
+    lept_set_boolean(&v, 0);
+    EXPECT_FALSE(lept_get_boolean(&v));
+    lept_free(&v);
 }
 
 static void test_access_number() {
-    /* \TODO */
+    ElemValue v;
+    lept_init(&v);
+    lept_set_string(&v, "a", 1);
+    lept_set_number(&v, 1234.5);
+    EXPECT_EQ_DOUBLE(1234.5, lept_get_number(&v));
+    lept_free(&v);
 }
 
 static void test_access_string() {
@@ -230,7 +240,7 @@ static void test_access_string() {
 static void test_parse() {
     test_parse_null();
     test_parse_true();
-    /*test_parse_false();*/
+    test_parse_false();
     test_parse_number();
     test_parse_string();
     test_parse_expect_value();

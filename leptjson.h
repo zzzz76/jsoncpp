@@ -2,7 +2,7 @@
 #define JSONCPP_LEPTJSON_H
 
 
-#include "jsonParser.h"
+#include "src/jsonParser.h"
 
 #define lept_init(v) do { (v)->type = VALUE_NULL; } while(0)
 
