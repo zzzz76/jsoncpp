@@ -3,7 +3,6 @@
 #include <stdlib.h>  /* NULL */
 #include <errno.h>  /* errno, ERANGE */
 #include <math.h>   /* HUGE_VAL */
-#include <string>
 
 using namespace std;
 
@@ -11,10 +10,8 @@ using namespace std;
 #define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
 
 
-static ElemValue *parse_value(char *&txt);
-
 // 上下文过滤器：不理想 -> 理想
-static void parse_whitespace(char *&txt) {
+void Parser::parse_whitespace() {
     char *p = txt;
     while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
         p++;
@@ -22,7 +19,7 @@ static void parse_whitespace(char *&txt) {
 }
 
 // 将上下文转换为null对象，并更新上下文
-static ElemValue *parse_null(char *&txt) {
+ElemValue *Parser::parse_null() {
     if (txt[0] != 'n' || txt[1] != 'u' || txt[2] != 'l' || txt[3] != 'l') {
         throw PARSE_INVALID_VALUE;
     }
@@ -33,7 +30,7 @@ static ElemValue *parse_null(char *&txt) {
 }
 
 // 将上下文转换为false对象，并更新上下文
-static ElemValue *parse_false(char *&txt) {
+ElemValue *Parser::parse_false() {
     if (txt[0] != 'f' || txt[1] != 'a' || txt[2] != 'l' || txt[3] != 's' || txt[4] != 'e') {
         throw PARSE_INVALID_VALUE;
     }
@@ -44,7 +41,7 @@ static ElemValue *parse_false(char *&txt) {
 }
 
 // 将上下文转换为true对象，并更新上下文
-static ElemValue *parse_true(char *&txt) {
+ElemValue *Parser::parse_true() {
     if (txt[0] != 't' || txt[1] != 'r' || txt[2] != 'u' || txt[3] != 'e') {
         throw PARSE_INVALID_VALUE;
     }
@@ -56,7 +53,7 @@ static ElemValue *parse_true(char *&txt) {
 
 
 // 将上下文转换为number对象，并更新上下文
-static ElemValue *parse_number(char *&txt) {
+ElemValue *Parser::parse_number() {
     char *p = txt;
     //负号
     if (*p == '-') p++;
@@ -103,7 +100,7 @@ static ElemValue *parse_number(char *&txt) {
 }
 
 // 将上下文转换为value对象，并更新上下文
-static ElemValue *parse_string(char *&txt) {
+ElemValue *Parser::parse_string() {
     // 先为json预设value对象
     ElemValue *v = new ElemValue;
     v->type = VALUE_STRING;
@@ -122,16 +119,16 @@ static ElemValue *parse_string(char *&txt) {
 }
 
 // 将上下文转换为value对象，并更新上下文
-static ElemValue *parse_array(char *&txt) {
+ElemValue *Parser::parse_array() {
     // 先为json预设value对象
     ElemValue *v = new ElemValue;
     v->type = VALUE_ARRAY;
     // 游动指针
     txt++;
     while (true) {
-        parse_whitespace(txt);
-        v->array.push_back(parse_value(txt));
-        parse_whitespace(txt);
+        parse_whitespace();
+        v->array.push_back(parse_value());
+        parse_whitespace();
         if (*txt == ',') {
             txt++;
         } else if (*txt == ']') {
@@ -145,50 +142,34 @@ static ElemValue *parse_array(char *&txt) {
 }
 
 // 将上下文转换为value对象, 并更新上下文
-static ElemValue *parse_value(char *&txt) {
+ElemValue *Parser::parse_value() {
     switch (*txt) {
         case 'n':
-            return parse_null(txt);
+            return parse_null();
         case 'f':
-            return parse_false(txt);
+            return parse_false();
         case 't':
-            return parse_true(txt);
+            return parse_true();
         case '"':
-            return parse_string(txt);
+            return parse_string();
         case '[':
-            return parse_array(txt);
+            return parse_array();
         case '\0':
             throw PARSE_EXPECT_VALUE;
         default:
-            return parse_number(txt);
+            return parse_number();
     }
 }
 
 // 将json转换为value对象
-ElemValue *parse(char *json) {
+ElemValue *Parser::parse(char *json) {
     // 建立一个上下文指针
-    char *txt = json;
-    parse_whitespace(txt);
-    ElemValue *v = parse_value(txt);
-    parse_whitespace(txt);
+    txt = json;
+    parse_whitespace();
+    ElemValue *v = parse_value();
+    parse_whitespace();
     if (*txt != '\0') {
         throw PARSE_ROOT_NOT_SINGULAR;
     }
     return v;
 }
-
-//ValueType get_type(ElemValue *v) {
-//    assert(v != NULL);
-//    return v->type;
-//}
-//
-//double get_number(ElemValue *v) {
-//    assert(v != NULL && v->type == VALUE_NUMBER);
-//    return v->n;
-//}
-//
-//string* get_string(ElemValue *v) {
-//    assert(v != NULL && v->type == VALUE_STRING);
-//    return v->str;
-//}
-

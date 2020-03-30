@@ -1,11 +1,10 @@
-#include <assert.h>
-#include "src/jsonParser.h"
 #include "leptjson.h"
+#include <assert.h>
 
 int lept_parse(ElemValue *v, const char *json) {
     try {
         lept_free(v);
-        *v = *parse(const_cast<char *>(json));
+        *v = *Parser().parse(const_cast<char *>(json));
     } catch (ExceptType e) {
         return e;
     }

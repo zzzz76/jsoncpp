@@ -28,12 +28,20 @@ typedef struct ElemValue {
     ValueType type;
 } ElemValue;
 
-ElemValue *parse(char *json);
+class Parser {
+private:
+    char *txt;
+    void parse_whitespace();
+    ElemValue *parse_null();
+    ElemValue *parse_false();
+    ElemValue *parse_true();
+    ElemValue *parse_number();
+    ElemValue *parse_string();
+    ElemValue *parse_array();
+    ElemValue *parse_value();
 
-//ValueType get_type(ElemValue *v);
-//
-//double get_number(ElemValue *v);
-//
-//string* get_string(ElemValue *v)
+public:
+    ElemValue *parse(char *json);
+};
 
 #endif //JSONCPP_JSONPARSER_H
