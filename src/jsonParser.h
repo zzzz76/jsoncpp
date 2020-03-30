@@ -23,15 +23,18 @@ typedef enum {
 
 typedef struct ElemValue {
     vector<ElemValue *> array;
-    string *str;
+    string str;
     double n;
     ValueType type;
 } ElemValue;
 
 class Parser {
 private:
-    char *txt;
+    char *txt; // 上下文
+    vector<ElemValue* > records; // 对象收集器，每一个创建的对象都要进行记录
+
     void parse_whitespace();
+    ElemValue *new_value();
     ElemValue *parse_null();
     ElemValue *parse_false();
     ElemValue *parse_true();
@@ -42,6 +45,7 @@ private:
 
 public:
     ElemValue *parse(char *json);
+    void reset_parser();
 };
 
 #endif //JSONCPP_JSONPARSER_H

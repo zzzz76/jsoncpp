@@ -1,10 +1,12 @@
 #include "leptjson.h"
 #include <assert.h>
 
+Parser parser; // 全场通用一个解释器
+
 int lept_parse(ElemValue *v, const char *json) {
     try {
         lept_free(v);
-        *v = *Parser().parse(const_cast<char *>(json));
+        *v = *parser.parse(const_cast<char *>(json));
     } catch (ExceptType e) {
         return e;
     }
@@ -13,8 +15,10 @@ int lept_parse(ElemValue *v, const char *json) {
 
 void lept_free(ElemValue* v) {
     assert(v != NULL);
-    if (v->type == VALUE_STRING)
-        delete(v->str);
+    parser.reset_parser();
+    v->array.clear();
+    v->str.clear();
+    v->n = 0.0;
     v->type = VALUE_NULL;
 }
 
@@ -46,17 +50,17 @@ void lept_set_number(ElemValue* v, double n) {
 
 const char* lept_get_string(const ElemValue* v) {
     assert(v != NULL && v->type == VALUE_STRING);
-    return v->str->c_str();
+    return v->str.c_str();
 }
 
 size_t lept_get_string_length(const ElemValue* v) {
     assert(v != NULL && v->type == VALUE_STRING);
-    return v->str->size();
+    return v->str.size();
 }
 
 void lept_set_string(ElemValue* v, const char* s, size_t len) {
     assert(v != NULL && (s != NULL || len == 0));
     lept_free(v);
-    v->str = new string(s);
+    v->str = s;
     v->type = VALUE_STRING;
 }
