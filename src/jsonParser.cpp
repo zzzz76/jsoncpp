@@ -148,6 +148,50 @@ ElemValue *Parser::parse_array() {
     return v;
 }
 
+// 将上下文转换为value对象，并更新上下文
+ElemValue* Parser::parse_object() {
+    // 先为json预设value对象
+    ElemValue *v = new_value();
+    v->type = VALUE_OBJECT;
+    // 游动指针
+    txt++;
+    while (true) {
+        parse_whitespace();
+        if (*txt != '"') {
+            throw PARSE_MISS_KEY;
+        }
+        txt++;
+        //开始解析字符串
+        pair<string, ElemValue *> p;
+        while (*txt != '"') {
+            if (*txt == '\0') {
+                throw PARSE_MISS_QUOTATION_MARK;
+            }
+            p.first.push_back(*txt);
+            txt++;
+        }
+        txt++;
+        parse_whitespace();
+        if (*txt != ':') {
+            throw PARSE_MISS_COLON;
+        }
+        txt++;
+        parse_whitespace();
+        p.second = parse_value();
+        v->maptable.insert(p);
+        parse_whitespace();
+        if (*txt == ',') {
+            txt++;
+        } else if (*txt == '}') {
+            txt++;
+            break;
+        } else {
+            throw PARSE_MISS_COMMA_OR_CURLY_BRACKET;
+        }
+    }
+    return v;
+}
+
 // 将上下文转换为value对象, 并更新上下文
 ElemValue *Parser::parse_value() {
     switch (*txt) {
@@ -161,6 +205,8 @@ ElemValue *Parser::parse_value() {
             return parse_string();
         case '[':
             return parse_array();
+        case '{':
+            return parse_object();
         case '\0':
             throw PARSE_EXPECT_VALUE;
         default:

@@ -104,31 +104,8 @@ static void test_parse_number() {
     } while(0)
 
 static void test_parse_string() {
-    /*TEST_STRING("", "\"\"");*/
-    do{
-        ElemValue v;
-        lept_init(&v);
-        EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, "\"\""));
-        EXPECT_EQ_INT(VALUE_STRING, lept_get_type(&v));
-        EXPECT_EQ_STRING("", lept_get_string(&v), lept_get_string_length(&v));
-        lept_free(&v);
-    } while(0);
-
-    /*TEST_STRING("Hello", "\"Hello\"");*/
-    do{
-        ElemValue v;
-        lept_init(&v);
-        EXPECT_EQ_INT(PARSE_OK, lept_parse(&v, "\"Hello\""));
-        EXPECT_EQ_INT(VALUE_STRING, lept_get_type(&v));
-        EXPECT_EQ_STRING("Hello", lept_get_string(&v), lept_get_string_length(&v));
-        lept_free(&v);
-    } while(0);
-
-
-#if 0
-    TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
-    TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
-#endif
+    TEST_STRING("", "\"\"");
+    TEST_STRING("Hello", "\"Hello\"");
 }
 
 #define TEST_ERROR(error, json)\
@@ -178,22 +155,6 @@ static void test_parse_number_too_big() {
 static void test_parse_missing_quotation_mark() {
     TEST_ERROR(PARSE_MISS_QUOTATION_MARK, "\"");
     TEST_ERROR(PARSE_MISS_QUOTATION_MARK, "\"abc");
-}
-
-static void test_parse_invalid_string_escape() {
-#if 0
-    TEST_ERROR(PARSE_INVALID_STRING_ESCAPE, "\"\\v\"");
-    TEST_ERROR(PARSE_INVALID_STRING_ESCAPE, "\"\\'\"");
-    TEST_ERROR(PARSE_INVALID_STRING_ESCAPE, "\"\\0\"");
-    TEST_ERROR(PARSE_INVALID_STRING_ESCAPE, "\"\\x12\"");
-#endif
-}
-
-static void test_parse_invalid_string_char() {
-#if 0
-    TEST_ERROR(PARSE_INVALID_STRING_CHAR, "\"\x01\"");
-    TEST_ERROR(PARSE_INVALID_STRING_CHAR, "\"\x1F\"");
-#endif
 }
 
 static void test_access_null() {
@@ -246,8 +207,6 @@ static void test_parse() {
     test_parse_root_not_singular();
     test_parse_number_too_big();
     test_parse_missing_quotation_mark();
-    test_parse_invalid_string_escape();
-    test_parse_invalid_string_char();
 
     test_access_null();
     test_access_boolean();
@@ -259,6 +218,5 @@ int main() {
     test_parse();
     printf("%d/%d (%3.2f%%) passed\n", test_pass, test_count, test_pass * 100.0 / test_count);
     return main_ret;
-
     return EXIT_SUCCESS;
 }

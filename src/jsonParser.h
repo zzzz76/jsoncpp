@@ -2,6 +2,7 @@
 #define JSONCPP_JSONPARSER_H
 
 #include <vector>
+#include <map>
 #include <string>
 
 using namespace std;
@@ -18,11 +19,16 @@ typedef enum {
     PARSE_NUMBER_TOO_BIG,
 
     PARSE_MISS_QUOTATION_MARK,
-    PARSE_MISS_COMMA_OR_SQUARE_BRACKET
+    PARSE_MISS_COMMA_OR_SQUARE_BRACKET,
+
+    PARSE_MISS_KEY,
+    PARSE_MISS_COLON,
+    PARSE_MISS_COMMA_OR_CURLY_BRACKET
 } ExceptType;
 
 typedef struct ElemValue {
     vector<ElemValue *> array;
+    map<string, ElemValue *> maptable;
     string str;
     double n;
     ValueType type;
@@ -41,6 +47,7 @@ private:
     ElemValue *parse_number();
     ElemValue *parse_string();
     ElemValue *parse_array();
+    ElemValue *parse_object();
     ElemValue *parse_value();
 
 public:
