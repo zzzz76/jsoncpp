@@ -1,8 +1,5 @@
 #include "jsonParser.h"
-#include <assert.h>  /* assert() */
-#include <stdlib.h>  /* NULL */
-#include <errno.h>  /* errno, ERANGE */
-#include <math.h>   /* HUGE_VAL */
+#include <cmath>   /* HUGE_VAL */
 
 using namespace std;
 
@@ -11,8 +8,8 @@ using namespace std;
 
 
 // 创建一个value对象
-ElemValue* Parser::new_value() {
-    ElemValue *v = new ElemValue;
+Value* Parser::new_value() {
+    Value *v = new Value;
     records.push_back(v);
     return v;
 }
@@ -26,41 +23,41 @@ void Parser::parse_whitespace() {
 }
 
 // 将上下文转换为null对象，并更新上下文
-ElemValue *Parser::parse_null() {
+Value *Parser::parse_null() {
     if (txt[0] != 'n' || txt[1] != 'u' || txt[2] != 'l' || txt[3] != 'l') {
         throw PARSE_INVALID_VALUE;
     }
-    ElemValue *v = new_value();
-    v->type = VALUE_NULL;
+    Value *v = new_value();
+    v->set_type(VALUE_NULL);
     txt += 4;
     return v;
 }
 
 // 将上下文转换为false对象，并更新上下文
-ElemValue *Parser::parse_false() {
+Value *Parser::parse_false() {
     if (txt[0] != 'f' || txt[1] != 'a' || txt[2] != 'l' || txt[3] != 's' || txt[4] != 'e') {
         throw PARSE_INVALID_VALUE;
     }
-    ElemValue *v = new_value();
-    v->type = VALUE_FALSE;
+    Value *v = new_value();
+    v->set_type(VALUE_FALSE);
     txt += 5;
     return v;
 }
 
 // 将上下文转换为true对象，并更新上下文
-ElemValue *Parser::parse_true() {
+Value *Parser::parse_true() {
     if (txt[0] != 't' || txt[1] != 'r' || txt[2] != 'u' || txt[3] != 'e') {
         throw PARSE_INVALID_VALUE;
     }
-    ElemValue *v = new_value();
-    v->type = VALUE_TRUE;
+    Value *v = new_value();
+    v->set_type(VALUE_TRUE);
     txt += 4;
     return v;
 }
 
 
 // 将上下文转换为number对象，并更新上下文
-ElemValue *Parser::parse_number() {
+Value *Parser::parse_number() {
     char *p = txt;
     //负号
     if (*p == '-') p++;
@@ -100,59 +97,68 @@ ElemValue *Parser::parse_number() {
     if (errno == ERANGE && (temp == HUGE_VAL || temp == -HUGE_VAL)) {
         throw PARSE_NUMBER_TOO_BIG;
     }
-    ElemValue *v = new_value();
-    v->type = VALUE_NUMBER;
-    v->n = temp;
+    Value *v = new_value();
+    v->set_type(VALUE_NUMBER);
+    v->set_num(temp);
     txt = p;
     return v;
 }
 
 // 将上下文转换为value对象，并更新上下文
-ElemValue *Parser::parse_string() {
+Value *Parser::parse_string() {
     // 先为json预设value对象
-    ElemValue *v = new_value();
-    v->type = VALUE_STRING;
+    Value *v = new_value();
+    v->set_type(VALUE_STRING);
+    string str;
     // 游动指针
     txt++;
     while (*txt != '"') {
         if (*txt == '\0') {
             throw PARSE_MISS_QUOTATION_MARK;
         }
-        v->str.push_back(*txt);
+        str.push_back(*txt);
         txt++;
     }
     txt++;
+    v->set_str(str);
     return v;
 }
 
 // 将上下文转换为value对象，并更新上下文
-ElemValue *Parser::parse_array() {
+Value *Parser::parse_array() {
     // 先为json预设value对象
-    ElemValue *v = new_value();
-    v->type = VALUE_ARRAY;
+    Value *v = new_value();
+    v->set_type(VALUE_ARRAY);
+    vector<Value *> array;
     // 游动指针
     txt++;
+    parse_whitespace();
+    if (*txt == ']') {
+        txt++;
+        return v;
+    }
     while (true) {
-        parse_whitespace();
-        v->array.push_back(parse_value());
+        array.push_back(parse_value());
         parse_whitespace();
         if (*txt == ',') {
             txt++;
+            parse_whitespace();
         } else if (*txt == ']') {
             txt++;
-            break;
+            v->set_array(array);
+            return v;
         } else {
             throw PARSE_MISS_COMMA_OR_SQUARE_BRACKET;
         }
     }
-    return v;
 }
 
 // 将上下文转换为value对象，并更新上下文
-ElemValue* Parser::parse_object() {
+Value* Parser::parse_object() {
     // 先为json预设value对象
-    ElemValue *v = new_value();
-    v->type = VALUE_OBJECT;
+    Value *v = new_value();
+    v->set_type(VALUE_OBJECT);
+    map<string, Value *> maptable;
     // 游动指针
     txt++;
     while (true) {
@@ -162,7 +168,7 @@ ElemValue* Parser::parse_object() {
         }
         txt++;
         //开始解析字符串
-        pair<string, ElemValue *> p;
+        pair<string, Value *> p;
         while (*txt != '"') {
             if (*txt == '\0') {
                 throw PARSE_MISS_QUOTATION_MARK;
@@ -178,22 +184,22 @@ ElemValue* Parser::parse_object() {
         txt++;
         parse_whitespace();
         p.second = parse_value();
-        v->maptable.insert(p);
+        maptable.insert(p);
         parse_whitespace();
         if (*txt == ',') {
             txt++;
         } else if (*txt == '}') {
             txt++;
-            break;
+            v->set_maptable(maptable);
+            return v;
         } else {
             throw PARSE_MISS_COMMA_OR_CURLY_BRACKET;
         }
     }
-    return v;
 }
 
 // 将上下文转换为value对象, 并更新上下文
-ElemValue *Parser::parse_value() {
+Value *Parser::parse_value() {
     switch (*txt) {
         case 'n':
             return parse_null();
@@ -215,12 +221,12 @@ ElemValue *Parser::parse_value() {
 }
 
 // 将json转换为value对象
-ElemValue *Parser::parse(char *json) {
+Value *Parser::parse(char *json) {
     try {
         // 建立一个上下文指针
         txt = json;
         parse_whitespace();
-        ElemValue *v = parse_value();
+        Value *v = parse_value();
         parse_whitespace();
         if (*txt != '\0') {
             throw PARSE_ROOT_NOT_SINGULAR;
