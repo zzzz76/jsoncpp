@@ -21,8 +21,9 @@ typedef enum {
 class Parser {
 private:
     char *txt; // 上下文
-    vector<Value* > records; // 对象收集器，每一个创建的对象都要进行记录
+    vector<Value* > tmp; // 对象缓存器
 
+    Parser(char *json);
     void parse_whitespace();
     Value *new_value();
     Value *parse_null();
@@ -33,10 +34,8 @@ private:
     Value *parse_array();
     Value *parse_object();
     Value *parse_value();
-
 public:
-    Value *parse(char *json);
-    void reset_parser();
+    static Value *parse(char *json);
 };
 
 #endif //JSONCPP_JSONPARSER_H

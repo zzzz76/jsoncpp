@@ -7,10 +7,15 @@ using namespace std;
 #define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
 
 
+Parser::Parser(char *json) {
+    tmp.clear();
+    txt = json;
+}
+
 // 创建一个value对象
 Value* Parser::new_value() {
     Value *v = new Value;
-    records.push_back(v);
+    tmp.push_back(v);
     return v;
 }
 
@@ -44,6 +49,7 @@ Value *Parser::parse_false() {
     return v;
 }
 
+
 // 将上下文转换为true对象，并更新上下文
 Value *Parser::parse_true() {
     if (txt[0] != 't' || txt[1] != 'r' || txt[2] != 'u' || txt[3] != 'e') {
@@ -54,7 +60,6 @@ Value *Parser::parse_true() {
     txt += 4;
     return v;
 }
-
 
 // 将上下文转换为number对象，并更新上下文
 Value *Parser::parse_number() {
@@ -222,28 +227,19 @@ Value *Parser::parse_value() {
 
 // 将json转换为value对象
 Value *Parser::parse(char *json) {
+    Parser parser(json);
     try {
-        // 建立一个上下文指针
-        txt = json;
-        parse_whitespace();
-        Value *v = parse_value();
-        parse_whitespace();
-        if (*txt != '\0') {
+        parser.parse_whitespace();
+        Value *v = parser.parse_value();
+        parser.parse_whitespace();
+        if (*parser.txt != '\0') {
             throw PARSE_ROOT_NOT_SINGULAR;
         }
         return v;
     } catch (ExceptType e){
-        reset_parser();
+        for (auto &it : parser.tmp) {
+            delete(it);
+        }
         throw e;
     }
-
-}
-
-// 重置解释器
-void Parser::reset_parser() {
-    for (auto &record : records) {
-        delete(record);
-    }
-    records.clear();
-    txt = nullptr;
 }

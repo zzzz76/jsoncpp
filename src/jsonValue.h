@@ -24,13 +24,13 @@ public:
     void set_str(string str);
     void set_num(double num);
     void set_type(ValueType type);
-
     vector<Value *> get_array();
     map<string, Value *> get_maptable();
     string get_str();
     double get_num();
     ValueType get_type();
 
+    static void delete_value(Value *&v);
 };
 
 
