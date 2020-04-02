@@ -137,12 +137,16 @@ Value *Parser::parse_array() {
 
 // 解析文本，并返回object对象
 Value* Parser::parse_object() {
-    // 先为json预设value对象
+    // 解析文本
     map<string, Value *> object;
     // 游动指针
     txt++;
+    parse_whitespace();
+    if (*txt == '}') {
+        txt++;
+        return collect(new Value(object));
+    }
     while (true) {
-        parse_whitespace();
         if (*txt != '"') {
             throw PARSE_MISS_KEY;
         }
@@ -168,6 +172,7 @@ Value* Parser::parse_object() {
         parse_whitespace();
         if (*txt == ',') {
             txt++;
+            parse_whitespace();
         } else if (*txt == '}') {
             txt++;
             return collect(new Value(object));

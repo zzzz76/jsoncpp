@@ -148,6 +148,52 @@ static void test_parse_array() {
     Value::delete_value(v);
 }
 
+static void test_parse_object() {
+    Value *v;
+
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(v, " { } "));
+    EXPECT_EQ_INT(VALUE_OBJECT, v->get_type());
+    EXPECT_EQ_SIZE_T(0, v->get_object().size());
+    Value::delete_value(v);
+
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(v,
+                                            " { "
+                                                    "\"n\" : null , "
+                                                    "\"f\" : false , "
+                                                    "\"t\" : true , "
+                                                    "\"i\" : 123 , "
+                                                    "\"s\" : \"abc\", "
+                                                    "\"a\" : [ 1, 2, 3 ],"
+                                                    "\"o\" : { \"1\" : 1, \"2\" : 2, \"3\" : 3 }"
+                                                    " } "
+    ));
+    EXPECT_EQ_INT(VALUE_OBJECT, v->get_type());
+    EXPECT_EQ_SIZE_T(7, v->get_object().size());
+    EXPECT_EQ_INT(VALUE_NULL,   v->get_object()["n"]->get_type());
+    EXPECT_EQ_INT(VALUE_FALSE,  v->get_object()["f"]->get_type());
+    EXPECT_EQ_INT(VALUE_TRUE,   v->get_object()["t"]->get_type());
+    EXPECT_EQ_INT(VALUE_NUMBER, v->get_object()["i"]->get_type());
+    EXPECT_EQ_DOUBLE(123.0, v->get_object()["i"]->get_num());
+    EXPECT_EQ_INT(VALUE_STRING, v->get_object()["s"]->get_type());
+    EXPECT_EQ_STRING("abc", v->get_object()["s"]->get_str().c_str(), v->get_object()["s"]->get_str().size());
+    EXPECT_EQ_INT(VALUE_ARRAY, v->get_object()["a"]->get_type());
+    EXPECT_EQ_SIZE_T(3, v->get_object()["a"]->get_array().size());
+    for (int i = 0; i < 3; i++) {
+        Value *e = v->get_object()["a"]->get_array()[i];
+        EXPECT_EQ_INT(VALUE_NUMBER, e->get_type());
+        EXPECT_EQ_DOUBLE(i + 1.0, e->get_num());
+    }
+    Value* o = v->get_object()["o"];
+    EXPECT_EQ_INT(VALUE_OBJECT, o->get_type());
+    EXPECT_EQ_SIZE_T(3, o->get_object().size());
+    for (int i = 0; i < 3; i++) {
+        Value* ov = o->get_object()[to_string(i + 1)];
+        EXPECT_EQ_INT(VALUE_NUMBER, ov->get_type());
+        EXPECT_EQ_DOUBLE(i + 1.0, ov->get_num());
+    }
+    Value::delete_value(v);
+}
+
 #define TEST_ERROR(error, json)\
     do {\
         Value *v;\
@@ -199,6 +245,29 @@ static void test_parse_miss_comma_or_square_bracket() {
     TEST_ERROR(PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[[]");
 }
 
+static void test_parse_miss_key() {
+    TEST_ERROR(PARSE_MISS_KEY, "{:1,");
+    TEST_ERROR(PARSE_MISS_KEY, "{1:1,");
+    TEST_ERROR(PARSE_MISS_KEY, "{true:1,");
+    TEST_ERROR(PARSE_MISS_KEY, "{false:1,");
+    TEST_ERROR(PARSE_MISS_KEY, "{null:1,");
+    TEST_ERROR(PARSE_MISS_KEY, "{[]:1,");
+    TEST_ERROR(PARSE_MISS_KEY, "{{}:1,");
+    TEST_ERROR(PARSE_MISS_KEY, "{\"a\":1,");
+}
+
+static void test_parse_miss_colon() {
+    TEST_ERROR(PARSE_MISS_COLON, "{\"a\"}");
+    TEST_ERROR(PARSE_MISS_COLON, "{\"a\",\"b\"}");
+}
+
+static void test_parse_miss_comma_or_curly_bracket() {
+    TEST_ERROR(PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1");
+    TEST_ERROR(PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1]");
+    TEST_ERROR(PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1 \"b\"");
+    TEST_ERROR(PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":{}");
+}
+
 static void test_access_type() {
     Value *v = new Value;
     EXPECT_EQ_INT(VALUE_NULL, v->get_type());
@@ -230,12 +299,16 @@ static void test_parse() {
     test_parse_number();
     test_parse_string();
     test_parse_array();
+    test_parse_object();
 
     test_parse_expect_value();
     test_parse_invalid_value();
     test_parse_root_not_singular();
     test_parse_missing_quotation_mark();
     test_parse_miss_comma_or_square_bracket();
+    test_parse_miss_key();
+    test_parse_miss_colon();
+    test_parse_miss_comma_or_curly_bracket();
 
     test_access_type();
     test_access_number();
