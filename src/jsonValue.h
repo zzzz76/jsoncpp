@@ -14,18 +14,20 @@ typedef enum {
 class Value {
 private:
     vector<Value *> array;
-    map<string, Value *> maptable;
+    map<string, Value *> object;
     string str;
     double num;
     ValueType type;
 public:
-    void set_array(vector<Value *> array);
-    void set_maptable(map<string, Value *> maptable);
-    void set_str(string str);
-    void set_num(double num);
-    void set_type(ValueType type);
+    Value(vector<Value *> array);
+    Value(map<string, Value *> object);
+    Value(string str);
+    Value(double num);
+    Value(bool type);
+    Value();
+
     vector<Value *> get_array();
-    map<string, Value *> get_maptable();
+    map<string, Value *> get_object();
     string get_str();
     double get_num();
     ValueType get_type();

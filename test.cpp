@@ -20,6 +20,11 @@ static int test_pass = 0;
 #define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
 #define EXPECT_EQ_STRING(expect, actual, alength) \
     EXPECT_EQ_BASE(sizeof(expect) - 1 == alength && memcmp(expect, actual, alength) == 0, expect, actual, "%s")
+#if defined(_MSC_VER)
+#define EXPECT_EQ_SIZE_T(expect, actual) EXPECT_EQ_BASE((expect) == (actual), (size_t)expect, (size_t)actual, "%Iu")
+#else
+#define EXPECT_EQ_SIZE_T(expect, actual) EXPECT_EQ_BASE((expect) == (actual), (size_t)expect, (size_t)actual, "%zu")
+#endif
 
 static ExceptType lept_parse(Value *&v, char *a) {
     try {
@@ -107,6 +112,42 @@ static void test_parse_string() {
     TEST_STRING("Hello world", "\"Hello world\"");
 }
 
+static void test_parse_array() {
+    Value *v;
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(v, "[ ]"));
+    EXPECT_EQ_INT(VALUE_ARRAY, v->get_type());
+    EXPECT_EQ_SIZE_T(0, v->get_array().size());
+    Value::delete_value(v);
+
+
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(v, "[ null , false , true , 123 , \"abc\" ]"));
+    EXPECT_EQ_INT(VALUE_ARRAY, v->get_type());
+    EXPECT_EQ_SIZE_T(5, v->get_array().size());
+    EXPECT_EQ_INT(VALUE_NULL,   v->get_array()[0]->get_type());
+    EXPECT_EQ_INT(VALUE_FALSE,  v->get_array()[1]->get_type());
+    EXPECT_EQ_INT(VALUE_TRUE,   v->get_array()[2]->get_type());
+    EXPECT_EQ_INT(VALUE_NUMBER, v->get_array()[3]->get_type());
+    EXPECT_EQ_INT(VALUE_STRING, v->get_array()[4]->get_type());
+    EXPECT_EQ_DOUBLE(123.0, v->get_array()[3]->get_num());
+    EXPECT_EQ_STRING("abc", v->get_array()[4]->get_str().c_str(), v->get_array()[4]->get_str().size());
+    Value::delete_value(v);
+
+    EXPECT_EQ_INT(PARSE_OK, lept_parse(v, "[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
+    EXPECT_EQ_INT(VALUE_ARRAY, v->get_type());
+    EXPECT_EQ_SIZE_T(4, v->get_array().size());
+    for (int i = 0; i < 4; i++) {
+        Value* a = v->get_array()[i];
+        EXPECT_EQ_INT(VALUE_ARRAY, a->get_type());
+        EXPECT_EQ_SIZE_T(i, a->get_array().size());
+        for (int j = 0; j < i; j++) {
+            Value* e = a->get_array()[j];
+            EXPECT_EQ_INT(VALUE_NUMBER, e->get_type());
+            EXPECT_EQ_DOUBLE((double)j, e->get_num());
+        }
+    }
+    Value::delete_value(v);
+}
+
 #define TEST_ERROR(error, json)\
     do {\
         Value *v;\
@@ -131,6 +172,10 @@ static void test_parse_invalid_value() {
     TEST_ERROR(PARSE_INVALID_VALUE, "inf");
     TEST_ERROR(PARSE_INVALID_VALUE, "NAN");
     TEST_ERROR(PARSE_INVALID_VALUE, "nan");
+
+    /* invalid value in array */
+    TEST_ERROR(PARSE_INVALID_VALUE, "[1,]");
+    TEST_ERROR(PARSE_INVALID_VALUE, "[\"a\", nul]");
 }
 
 static void test_parse_root_not_singular() {
@@ -142,37 +187,40 @@ static void test_parse_root_not_singular() {
     TEST_ERROR(PARSE_ROOT_NOT_SINGULAR, "0x123");
 }
 
-static void test_parse_number_too_big() {
-    TEST_ERROR(PARSE_NUMBER_TOO_BIG, "1e309");
-    TEST_ERROR(PARSE_NUMBER_TOO_BIG, "-1e309");
-}
-
 static void test_parse_missing_quotation_mark() {
     TEST_ERROR(PARSE_MISS_QUOTATION_MARK, "\"");
     TEST_ERROR(PARSE_MISS_QUOTATION_MARK, "\"abc");
 }
 
+static void test_parse_miss_comma_or_square_bracket() {
+    TEST_ERROR(PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[1");
+    TEST_ERROR(PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[1}");
+    TEST_ERROR(PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[1 2");
+    TEST_ERROR(PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[[]");
+}
 
 static void test_access_type() {
-    Value v;
-    v.set_type(VALUE_NULL);
-    EXPECT_EQ_INT(VALUE_NULL, v.get_type());
-    v.set_type(VALUE_TRUE);
-    EXPECT_EQ_INT(VALUE_TRUE, v.get_type());
+    Value *v = new Value;
+    EXPECT_EQ_INT(VALUE_NULL, v->get_type());
+    Value::delete_value(v);
+    v = new Value(true);
+    EXPECT_EQ_INT(VALUE_TRUE, v->get_type());
+    Value::delete_value(v);
 }
 
 static void test_access_number() {
-    Value v;
-    v.set_num(1234.5);
-    EXPECT_EQ_DOUBLE(1234.5, v.get_num());
+    Value *v = new Value(1234.5);
+    EXPECT_EQ_DOUBLE(1234.5, v->get_num());
+    Value::delete_value(v);
 }
 
 static void test_access_string() {
-    Value v;
-    v.set_str("");
-    EXPECT_EQ_STRING("", v.get_str().c_str(), v.get_str().size());
-    v.set_str("Hello");
-    EXPECT_EQ_STRING("Hello", v.get_str().c_str(), v.get_str().size());
+    Value *v = new Value(string(""));
+    EXPECT_EQ_STRING("", v->get_str().c_str(), v->get_str().size());
+    Value::delete_value(v);
+    v = new Value(string("Hello"));
+    EXPECT_EQ_STRING("Hello", v->get_str().c_str(), v->get_str().size());
+    Value::delete_value(v);
 }
 
 static void test_parse() {
@@ -181,11 +229,13 @@ static void test_parse() {
     test_parse_false();
     test_parse_number();
     test_parse_string();
+    test_parse_array();
+
     test_parse_expect_value();
     test_parse_invalid_value();
     test_parse_root_not_singular();
-    test_parse_number_too_big();
     test_parse_missing_quotation_mark();
+    test_parse_miss_comma_or_square_bracket();
 
     test_access_type();
     test_access_number();

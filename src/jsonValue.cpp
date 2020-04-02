@@ -1,32 +1,40 @@
 #include "jsonValue.h"
 
-void Value::set_array(vector<Value *> array) {
+Value::Value(vector<Value *> array) {
+    this->type = VALUE_ARRAY;
     this->array = array;
 }
 
-void Value::set_maptable(map<string, Value *> maptable) {
-    this->maptable = maptable;
+Value::Value(map<string, Value *> object) {
+    this->type = VALUE_OBJECT;
+    this->object = object;
 }
 
-void Value::set_str(string str) {
+Value::Value(string str) {
+    this->type = VALUE_STRING;
     this->str = str;
 }
 
-
-void Value::set_num(double num) {
+Value::Value(double num) {
+    this->type = VALUE_NUMBER;
     this->num = num;
 }
 
-void Value::set_type(ValueType type) {
-    this->type = type;
+Value::Value(bool type) {
+    if (type) this->type = VALUE_TRUE;
+    else this->type = VALUE_FALSE;
+}
+
+Value::Value() {
+    this->type = VALUE_NULL;
 }
 
 vector<Value *> Value::get_array() {
     return array;
 }
 
-map<string, Value *> Value::get_maptable() {
-    return maptable;
+map<string, Value *> Value::get_object() {
+    return object;
 }
 
 string Value::get_str() {
@@ -50,10 +58,10 @@ void Value::delete_value(Value *&v) {
         }
     }
     if (v->type == VALUE_OBJECT) {
-        for (auto &it : v->maptable) {
+        for (auto &it : v->object) {
             delete_value(it.second);
         }
     }
     delete (v);
-    v = nullptr;
+    v = NULL;
 }

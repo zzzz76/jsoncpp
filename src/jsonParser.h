@@ -8,7 +8,6 @@ typedef enum {
     PARSE_EXPECT_VALUE,
     PARSE_INVALID_VALUE,
     PARSE_ROOT_NOT_SINGULAR,
-    PARSE_NUMBER_TOO_BIG,
     PARSE_MISS_QUOTATION_MARK,
 
     PARSE_MISS_COMMA_OR_SQUARE_BRACKET,
@@ -21,11 +20,11 @@ typedef enum {
 class Parser {
 private:
     char *txt; // 上下文
-    vector<Value* > tmp; // 对象缓存器
+    vector<Value* > collector; // 对象缓存器
 
     Parser(char *json);
+    Value* collect(Value *v);
     void parse_whitespace();
-    Value *new_value();
     Value *parse_null();
     Value *parse_false();
     Value *parse_true();
