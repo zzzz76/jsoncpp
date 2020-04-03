@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <cassert>
 
 using namespace std;
 
@@ -18,6 +19,7 @@ private:
     string str;
     double num;
     ValueType type;
+
 public:
     Value(vector<Value *> array);
     Value(map<string, Value *> object);

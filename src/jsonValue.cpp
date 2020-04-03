@@ -52,6 +52,7 @@ ValueType Value::get_type() {
 // 此函数可以释放当前对象
 void Value::delete_value(Value *&v) {
     // 对value的释放可以进行分解
+    assert(v != NULL);
     if (v->type == VALUE_ARRAY) {
         for (auto &it : v->array) {
             delete_value(it);

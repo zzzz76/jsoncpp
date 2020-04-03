@@ -22,7 +22,7 @@ private:
     char *txt; // 上下文
     vector<Value* > collector; // 对象缓存器
 
-    Parser(char *json);
+    Parser(char *txt);
     Value* collect(Value *v);
     void parse_whitespace();
     Value *parse_null();
@@ -33,6 +33,7 @@ private:
     Value *parse_array();
     Value *parse_object();
     Value *parse_value();
+
 public:
     static Value *parse(char *json);
 };

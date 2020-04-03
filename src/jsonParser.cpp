@@ -4,9 +4,9 @@
 #define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
 
 
-Parser::Parser(char *json) {
+Parser::Parser(char *txt) {
     collector.clear();
-    txt = json;
+    this->txt = txt;
 }
 
 // 收集value对象
@@ -206,6 +206,7 @@ Value *Parser::parse_value() {
 
 // 将json字符串转换为json对象
 Value *Parser::parse(char *json) {
+    assert(json != NULL);
     Parser parser(json);
     try {
         parser.parse_whitespace();
