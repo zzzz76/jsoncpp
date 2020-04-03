@@ -1,5 +1,5 @@
-#include "src/jsonParser.h"
-#include "src/jsonGenerator.h"
+#include "jsonParser.h"
+#include "jsonGenerator.h"
 #include <cstring>
 
 static int main_ret = 0;

@@ -1,93 +1,93 @@
-## json 是什么
+## 从零开始的JSON库
 
-ValueObject 是一个数组对象，数组含有同一种元素
+项目地址 [jsoncpp](https://github.com/zzzz76/jsoncpp) ，此项目受到 [leptjson](https://github.com/miloyip) 启发，实现了最基本的功能，仅作学习使用。
+
+ * 提供简单的 parse() 和 generate() 方法将 JSON 文本解析成对象，反之亦然
+ * 仅支持将基本类型为 Value 的 JSON 抽象语法树与 JSON 文本相互转换
+ * 使用标准 C/C++ 语言 (C++11)
+ * 不依赖第三方库
+
+<a href="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200403222129004-694085553.png"><img src="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200403222129004-694085553.png" width="70%" height="70%"></a>
+
+## 启动
+
+启动此项目需要安装 gcc4.8 以上版本（支持c++11即可）
+
+~~~shell
+rm *.o
+rm start
+g++ -w -c -std=c++11 jsonValue.cpp
+g++ -w -c -std=c++11 jsonGenerator.cpp
+g++ -w -c -std=c++11 jsonParser.cpp
+g++ -w -c -std=c++11 test.cpp
+g++ -w jsonValue.o jsonGenerator.o jsonParser.o test.o -o start
+./start
 ~~~
-struct ValueObject {
-    Element list[10];
+
+## 初步入门
+
+如何解析一段json文本呢，我们可以先从更简单的问题开始思考。
+
+##### 1、给定长文本 "[1,2,3]" ，问如何才能得到一个数组？
+
+当我们想通过解析函数的连续调用去处理一段长文本时，解析函数需要分两步实现：
+
+* step1 解析文本并更新文本指针。
+* step2 若解析成功则返回解析结果。
+
+这里只需要调用三次解析函数，最后遇到 ']' 结束即可
+
+~~~c++
+class Parser{
+    char *txt;
+    int parse_value() {
+        /* 解析txt上下文 */
+        /* 返回一个数值 */
+    }
+}
+
+int main() {
+    /* 建立parser */
+    while (*parser.txt != ']') {
+        array[i] = parser.parse_value();
+    }
 }
 ~~~
 
-Element 是一个对象，由key和value组成
-~~~
-struct Element {
-    string elem_key;
-    ElemValue elem_value;
+##### 2、给定长文本 "[1,2,[4,5]]" ，问如何才能得到一棵树?
+
+同理，这里需要调用三次解析函数，最后遇到 ']' 结束即可
+
+~~~c++
+typedef struct {
+    int number;
+    vector<Node* > array;
+} TreeNode
+
+class Parser{
+    char* txt;
+    TreeNode* parse_value() {
+        /* 解析txt上下文 */
+        /* 返回一个节点 */
+    }
+}
+
+int main() {
+    /* 建立parser */
+    /* 建立树根 */
+    while (*parser.txt != ']') {
+        root.array[i] = parser.parse_value();
+    }
 }
 ~~~
 
-ElemValue 是一个对象，其有六中形式 
-~~~
-ElemValue == null
-ElemValue == boolean
-ElemValue == Number
-ElemValue == string
-ElemValue == ValueArray
-ElemValue == ValueObject
-~~~
+完成了长文本的解析之后，再考虑解析函数本身的实现。 '1' , '2' 可以直接解析，而 "[4,5]" 可以看做一个长文本，做递归调用即可。
 
-ValueArray 是一个数组对象，数组含有同一种元素
-~~~
-struct ValueArray {
-    ElemValue list[10];
-}
-~~~
+以上过程我均采用了面向对象的设计，每一个函数都是对对象的操作。当然，大家也可以采用面向过程的思路，但是务必将 txt 文本指针的地址传入每个函数中，或者采用引用。
 
-json字符串样例
-~~~
-{
-    "title": "Design Patterns",
-    "subtitle": "Elements of Reusable Object-Oriented Software",
-    "author": [
-        "Erich Gamma",
-        "Richard Helm",
-        "Ralph Johnson",
-        "John Vlissides"
-    ],
-    "year": 2009,
-    "weight": 1.8,
-    "hardcover": true,
-    "publisher": {
-        "Company": "Pearson Education",
-        "Country": "India"
-    },
-    "website": null
-}
-~~~
+##### 3、给定长文本 JSON ，问如何才能得到一棵树？
 
+本项目 [jsoncpp](https://github.com/zzzz76/jsoncpp) 便是此问题的答案。
 
-## 面向对象
-
-java：基本类型的传参均为复制
-swap(int a[], int index1, int index2)
-
-Node node = new Node();
-
-c++：基本类型的传参均为复制
-注明：c++中结构体亦为基本类型
-swap(int* a, int index1, int index2)
-
-Node *node = new Node();
-
-## 函数异常
-
-任何函数均有其使用规范
-比如：除法、下标访问、数值转换
-
-当正确的使用函数时，函数可以支持
-当错误的使用函数时，函数无法支持
-
-对于第二种情况，需要立刻终止函数的执行
-比如：编译错误、程序中断(溢出、报错)
-
-## 基本介绍
-
-* test: 为测试启动器，里面的多个测试用例均来自lept_json
-* leptTest: 为解析库，负责提供测试需要的函数，并调用解析器进行解析
-* jsonc: 为解析器。
-
-依赖关系:
-
-test -> leptTest -> jsonc
-test -> leptTest.h / jsonc.h
-leptTest -> jsonc.h
-jsonc -> jsonc.h
+其中 parse 和 generate 方法解析时序图：
+<a href="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200420224035900-1326683849.png"><img src="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200420224035900-1326683849.png" width="70%" height="70%"></a>

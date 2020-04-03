@@ -1,0 +1,97 @@
+@startuml
+participant m as "main()"
+participant s as "staic"
+participant p as "parser:Parser"
+participant g as "generator:Generator"
+participant v as "value:Value"
+
+m -> s: parse(json)
+activate s
+
+s -> p: new Parser(json)
+activate p
+return
+
+s -> p: parse_value()
+activate p
+
+p -> p: parse_array()
+activate p #FFBBBB
+
+p -> p: parse_value()
+activate p
+
+p -> p: parse_false()
+activate p #FFBBBB
+
+p -> v: new Value(false)
+activate v
+return
+
+deactivate p
+deactivate p
+
+p -> p: parse_value()
+activate p
+
+p -> p: parse_true()
+activate p #FFBBBB
+
+p -> v: new Value(true)
+activate v
+return
+
+deactivate p
+deactivate p
+
+p -> v: new Value(array)
+activate v
+return
+
+deactivate p
+
+p --> s
+deactivate p
+
+s --> m
+deactivate s
+
+
+m -> s: generate(value)
+activate s
+
+s -> g: new Generator()
+activate g
+return
+
+s -> g: generate_value(value)
+activate g
+
+g -> g: generate_array(value)
+activate g #FFBBBB
+
+g -> g: generate_value(v1)
+activate g
+
+g -> g: generate_false()
+activate g #FFBBBB
+deactivate g
+deactivate g
+
+g -> g: generate_value(v2)
+activate g
+
+g -> g: generate_true()
+activate g #FFBBBB
+deactivate g
+deactivate g
+
+deactivate g
+deactivate g
+
+s -> g: get_json()
+activate g
+return
+return
+
+@enduml
