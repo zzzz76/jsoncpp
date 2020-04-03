@@ -1,4 +1,5 @@
 #include "src/jsonParser.h"
+#include "src/jsonGenerator.h"
 #include <cstring>
 
 static int main_ret = 0;
@@ -109,7 +110,8 @@ static void test_parse_number() {
 static void test_parse_string() {
     TEST_STRING("", "\"\"");
     TEST_STRING("Hello", "\"Hello\"");
-    TEST_STRING("Hello world", "\"Hello world\"");
+    TEST_STRING("Hello\nworld", "\"Hello\nworld\"");
+    TEST_STRING("Hello\\nworld", "\"Hello\\nworld\"");
 }
 
 static void test_parse_array() {
@@ -268,6 +270,85 @@ static void test_parse_miss_comma_or_curly_bracket() {
     TEST_ERROR(PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":{}");
 }
 
+
+
+static void test_parse() {
+    test_parse_null();
+    test_parse_true();
+    test_parse_false();
+    test_parse_number();
+    test_parse_string();
+    test_parse_array();
+    test_parse_object();
+
+    test_parse_expect_value();
+    test_parse_invalid_value();
+    test_parse_root_not_singular();
+    test_parse_missing_quotation_mark();
+    test_parse_miss_comma_or_square_bracket();
+    test_parse_miss_key();
+    test_parse_miss_colon();
+    test_parse_miss_comma_or_curly_bracket();
+}
+
+#define TEST_ROUNDTRIP(json)\
+    do {\
+        Value *v;\
+        EXPECT_EQ_INT(PARSE_OK, lept_parse(v, json));\
+        string str = Generator::generate(v);\
+        EXPECT_EQ_STRING(json, str.c_str(), str.size());\
+        Value::delete_value(v);\
+    } while(0)
+
+static void test_generate_number() {
+    TEST_ROUNDTRIP("0");
+    TEST_ROUNDTRIP("-0");
+    TEST_ROUNDTRIP("1");
+    TEST_ROUNDTRIP("-1");
+    TEST_ROUNDTRIP("1.5");
+    TEST_ROUNDTRIP("-1.5");
+    TEST_ROUNDTRIP("3.25");
+    TEST_ROUNDTRIP("1e+20");
+    TEST_ROUNDTRIP("1.234e+20");
+    TEST_ROUNDTRIP("1.234e-20");
+
+    TEST_ROUNDTRIP("1.0000000000000002"); /* the smallest number > 1 */
+    TEST_ROUNDTRIP("4.9406564584124654e-324"); /* minimum denormal */
+    TEST_ROUNDTRIP("-4.9406564584124654e-324");
+    TEST_ROUNDTRIP("2.2250738585072009e-308");  /* Max subnormal double */
+    TEST_ROUNDTRIP("-2.2250738585072009e-308");
+    TEST_ROUNDTRIP("2.2250738585072014e-308");  /* Min normal positive double */
+    TEST_ROUNDTRIP("-2.2250738585072014e-308");
+    TEST_ROUNDTRIP("1.7976931348623157e+308");  /* Max double */
+    TEST_ROUNDTRIP("-1.7976931348623157e+308");
+}
+
+static void test_generate_string() {
+    TEST_ROUNDTRIP("\"\"");
+    TEST_ROUNDTRIP("\"Hello\"");
+    TEST_ROUNDTRIP("\"Hello\\nWorld\"");
+}
+
+static void test_generate_array() {
+    TEST_ROUNDTRIP("[]");
+    TEST_ROUNDTRIP("[null,false,true,123,\"abc\",[1,2,3]]");
+}
+
+static void test_generate_object() {
+    TEST_ROUNDTRIP("{}");
+    TEST_ROUNDTRIP("{\"a\":[1,2,3],\"f\":false,\"i\":123,\"n\":null,\"o\":{\"1\":1,\"2\":2,\"3\":3},\"s\":\"abc\",\"t\":true}");
+}
+
+static void test_generate() {
+    TEST_ROUNDTRIP("null");
+    TEST_ROUNDTRIP("false");
+    TEST_ROUNDTRIP("true");
+    test_generate_number();
+    test_generate_string();
+    test_generate_array();
+    test_generate_object();
+}
+
 static void test_access_type() {
     Value *v = new Value;
     EXPECT_EQ_INT(VALUE_NULL, v->get_type());
@@ -292,24 +373,7 @@ static void test_access_string() {
     Value::delete_value(v);
 }
 
-static void test_parse() {
-    test_parse_null();
-    test_parse_true();
-    test_parse_false();
-    test_parse_number();
-    test_parse_string();
-    test_parse_array();
-    test_parse_object();
-
-    test_parse_expect_value();
-    test_parse_invalid_value();
-    test_parse_root_not_singular();
-    test_parse_missing_quotation_mark();
-    test_parse_miss_comma_or_square_bracket();
-    test_parse_miss_key();
-    test_parse_miss_colon();
-    test_parse_miss_comma_or_curly_bracket();
-
+static void test_access() {
     test_access_type();
     test_access_number();
     test_access_string();
@@ -317,6 +381,8 @@ static void test_parse() {
 
 int main() {
     test_parse();
+    test_generate();
+    test_access();
     printf("%d/%d (%3.2f%%) passed\n", test_pass, test_count, test_pass * 100.0 / test_count);
     return main_ret;
     return EXIT_SUCCESS;

@@ -23,7 +23,10 @@ void Generator::generate_true() {
 
 // 生成number文本
 void Generator::generate_number(Value *v) {
-    txt += to_string(v->get_num());
+//    txt += to_string(v->get_num());
+    char buffer[32];
+    int length = sprintf(buffer, "%.17g", v->get_num());
+    txt.append(buffer, length);
 }
 
 // 生成string文本
