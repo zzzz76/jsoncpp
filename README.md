@@ -1,3 +1,5 @@
+<meta name="referrer" content="no-referrer" />
+
 ## 从零开始的JSON库
 
 项目地址 [jsoncpp](https://github.com/zzzz76/jsoncpp) ，此项目受到 [leptjson](https://github.com/miloyip) 启发，实现了最基本的功能，仅作学习使用。
