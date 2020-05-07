@@ -9,7 +9,7 @@
  * 使用标准 C/C++ 语言 (C++11)
  * 不依赖第三方库
 
-<a href="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200403222129004-694085553.png"><img src="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200403222129004-694085553.png" width="70%" height="70%"></a>
+<a href="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200403222129004-694085553.png" referrer="no-referrer|origin|unsafe-url"><img src="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200403222129004-694085553.png" width="70%" height="70%"></a>
 
 ## 启动
 
@@ -92,4 +92,4 @@ int main() {
 本项目 [jsoncpp](https://github.com/zzzz76/jsoncpp) 便是此问题的答案。
 
 其中 parse 和 generate 方法解析时序图：
-<a href="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200420224035900-1326683849.png"><img src="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200420224035900-1326683849.png" width="70%" height="70%"></a>
+<a href="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200420224035900-1326683849.png" referrer="no-referrer|origin|unsafe-url"><img src="https://img2020.cnblogs.com/blog/1039974/202004/1039974-20200420224035900-1326683849.png" width="70%" height="70%"></a>
